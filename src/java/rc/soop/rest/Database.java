@@ -89,7 +89,7 @@ public class Database {
     public Response_verificacf verificacf(String cf) {
         try {
             String sql = "SELECT * FROM allievi a WHERE a.codicefiscale = ? AND a.id_statopartecipazione <> ?";
-            try (PreparedStatement ps = this.c.prepareStatement(sql)) {
+            try (PreparedStatement ps = this.c.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 ps.setString(1, cf);
                 ps.setString(2, "11");
                 try (ResultSet rs = ps.executeQuery()) {
@@ -120,7 +120,7 @@ public class Database {
     public String getIstatComune(Long id) {
         try {
             String sql = "SELECT istat FROM comuni a WHERE a.idcomune = ?";
-            try (PreparedStatement ps = this.c.prepareStatement(sql)) {
+            try (PreparedStatement ps = this.c.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 ps.setLong(1, id);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
@@ -137,7 +137,7 @@ public class Database {
     public Long getIdComune(String istat) {
         try {
             String sql = "SELECT a.idcomune FROM comuni a WHERE a.istat = ?";
-            try (PreparedStatement ps = this.c.prepareStatement(sql)) {
+            try (PreparedStatement ps = this.c.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 ps.setString(1, istat);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
@@ -154,7 +154,7 @@ public class Database {
     public String getNazioneIstat(String istat) {
         try {
             String sql = "SELECT nome FROM nazioni_rc a WHERE a.codicefiscale = ?";
-            try (PreparedStatement ps = this.c.prepareStatement(sql)) {
+            try (PreparedStatement ps = this.c.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 ps.setString(1, istat);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
@@ -171,7 +171,7 @@ public class Database {
     public Long getIdNazioneIstat(String istat) {
         try {
             String sql = "SELECT a.idnazione FROM nazioni_rc a WHERE a.istat = ?";
-            try (PreparedStatement ps = this.c.prepareStatement(sql)) {
+            try (PreparedStatement ps = this.c.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 ps.setString(1, istat);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
@@ -188,7 +188,7 @@ public class Database {
     public Long getIdNazioneCF(String cf) {
         try {
             String sql = "SELECT a.idnazione FROM nazioni_rc a WHERE a.codicefiscale = ?";
-            try (PreparedStatement ps = this.c.prepareStatement(sql)) {
+            try (PreparedStatement ps = this.c.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 ps.setString(1, cf);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
@@ -239,6 +239,18 @@ public class Database {
             insertTracking("ERROR SYSTEM", estraiEccezione(ex));
         }
         return -5L;
+    }
+
+    public boolean cambiostatoallievo(String cf, String statodest) {
+        try {
+            String upd = "UPDATE allievi SET id_statopartecipazione = '" + statodest + "' WHERE codicefiscale = '" + cf + "' AND id_statopartecipazione IN ('10','12','13','14')";
+            try (Statement st = this.c.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+                return st.executeUpdate(upd) > 0;
+            }
+        } catch (Exception ex) {
+            insertTracking("ERROR SYSTEM", estraiEccezione(ex));
+        }
+        return false;
     }
 
 }

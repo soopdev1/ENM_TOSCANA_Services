@@ -4,6 +4,7 @@
  */
 package rc.soop.rest;
 
+import java.util.Date;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -13,11 +14,11 @@ import org.joda.time.format.DateTimeFormatter;
  * @author Administrator
  */
 public class Utils {
-    
+
     public static final String PATTERN1 = "dd/MM/yyyy";
     public static final String PATTERN2 = "yyyy-MM-dd";
     public static final DateTimeFormatter DTFPATTERN1 = DateTimeFormat.forPattern(PATTERN1);
-    
+
     public static String estraiEccezione(Exception ec1) {
         try {
             String stack_nam = ec1.getStackTrace()[0].getMethodName();
@@ -28,7 +29,7 @@ public class Utils {
         return ec1.getMessage();
 
     }
-    
+
     //CODICE FISCALE
     private static String validateCF_regular(String cf) {
         if (!cf.matches("^[0-9A-Z]{16}$")) {
@@ -69,5 +70,14 @@ public class Utils {
             return estraiEccezione(e);
         }
     }
-    
+
+    public static Date convertDate(String ing, String pattern) {
+        try {
+            return DateTimeFormat.forPattern(pattern).parseDateTime(ing).toDate();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }

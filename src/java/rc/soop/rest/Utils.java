@@ -4,7 +4,14 @@
  */
 package rc.soop.rest;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -77,6 +84,34 @@ public class Utils {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    public static void createDir(String path) {
+        try {
+            Files.createDirectories(Paths.get(path));
+        } catch (Exception e) {
+        }
+    }
+
+    public static Logger createLog(String nameapp, String logpath, boolean neet) {
+        try {
+            File dir1 = new File(logpath);
+            createDir(logpath);
+            Date d = new Date();
+            String dataOdierna = (new SimpleDateFormat("ddMMyyyy")).format(d);
+            File dir2 = new File(dir1.getPath() + File.separator + dataOdierna);
+            createDir(dir1.getPath() + File.separator + dataOdierna);
+            String ora = (new SimpleDateFormat("HHmmss")).format(d);
+            Logger logger = Logger.getLogger("MyLog");
+            FileHandler fh = new FileHandler(dir2.getPath() + File.separator + nameapp + "_" + ora + ".log");
+            logger.addHandler(fh);
+            SimpleFormatter formatter = new SimpleFormatter();
+            fh.setFormatter(formatter);
+            return logger;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Logger.getLogger(Utils.class.getName());
         }
     }
 

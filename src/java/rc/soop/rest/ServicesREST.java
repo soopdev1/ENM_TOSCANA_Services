@@ -8,13 +8,23 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import java.security.Key;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.UUID;
+import javax.crypto.spec.SecretKeySpec;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import rc.soop.auth.Secured;
 import static rc.soop.rest.Utils.PATTERN1;
@@ -28,9 +38,67 @@ import static rc.soop.rest.Utils.validateCF;
 /**
  * Root resource (exposed at "ServicesREST" path)
  */
-@Path("enm/2.0")
+@Path("enm")
 public class ServicesREST {
 
+    private static final String usrIDOL = "Idol2023";
+    private static final String secret = "asdfSFS34wfsdfsdfSDSD32dfsddDDerQSNCK34SOWEK5354fdgdRR";
+
+    @GET
+    @Path("/authentication")
+    @Produces("application/json")
+    public Response authenticateUser() {
+        try {
+            //Credentials credentials = new Gson().fromJson(jo_credentials, Credentials.class);
+            // Authenticate the user using the credentials provided
+            //authenticate(credentials.getUsername(), credentials.getPassword());
+            // Issue a token for the user
+            String token = issueToken(usrIDOL);
+//            String token = issueToken(credentials.getUsername());
+            // Return the token on the response
+            return Response.status(200).entity(new Gson().toJson(new Response_auth(token))).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+    }
+
+//    private void authenticate(String username, String password) throws Exception {
+//        // Authenticate against a database, LDAP, file or whatever
+//        // Throw an Exception if the credentials are invalid
+//        try {
+//            boolean e1 = username.trim().equals(usrIDOL);
+//            boolean e2 = password.trim().equals(pswIDOL);
+//            if (e1 && e2) {
+//
+//            } else {
+//                throw new IOException();
+//            }
+//        } catch (Exception e) {
+//             e.printStackTrace();
+//            throw new IOException();
+//        }
+//    }
+
+    private String issueToken(String username) {
+        // Issue a token (can be a random String persisted to a database or a JWT token)
+        // The issued token must be associated to a user
+        // Return the issued token
+        Instant is1 = Instant.now();
+        Key ju = new SecretKeySpec(Base64.getDecoder().decode(secret), SignatureAlgorithm.HS256.getJcaName());
+        return Jwts.builder()
+                .claim("name", username)
+                .claim("email", username + "@enm.it")
+                .setSubject(username)
+                .setId(UUID.randomUUID().toString())
+                .setIssuedAt(Date.from(is1))
+                .setExpiration(Date.from(is1.plus(5, ChronoUnit.MINUTES)))
+                .signWith(ju)
+                .compact();
+    }
+    
+    
+    
+    
     @GET
     @Secured
     @Path("/testservices")

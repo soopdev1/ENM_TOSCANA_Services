@@ -1,11 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="3.1" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
+    <display-name>ENM Services</display-name>
+    <distributable/>
     <filter>
         <filter-name>AuthenticationFilter</filter-name>
         <filter-class>rc.soop.rest.RestAuthenticationFilter</filter-class>
     </filter>
     <filter-mapping>
         <filter-name>AuthenticationFilter</filter-name>
-        <url-pattern>/restv2/authentication</url-pattern>
+        <url-pattern>/restv2/enm/authentication</url-pattern>
     </filter-mapping>
+    <!--<servlet>
+        <servlet-name>Jersey RESTful Application</servlet-name>
+        <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>jersey.config.server.provider.packages</param-name>
+            <param-value>io.swagger.jaxrs.listing,rc.soop.rest</param-value>
+        </init-param>
+    </servlet>
+    <servlet>
+        <servlet-name>SwaggerConfigurationServlet</servlet-name>
+        <servlet-class>rc.soop.rest.SwaggerConfigurationServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Jersey RESTful Application</servlet-name>
+        <url-pattern>/restv2/enm/*</url-pattern>
+    </servlet-mapping>-->
+    <session-config>
+        <session-timeout>10</session-timeout>
+    </session-config>
 </web-app>

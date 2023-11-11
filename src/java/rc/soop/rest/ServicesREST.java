@@ -86,7 +86,7 @@ public class ServicesREST {
         Key ju = new SecretKeySpec(Base64.getDecoder().decode(secret), SignatureAlgorithm.HS256.getJcaName());
         return Jwts.builder()
                 .claim("name", username)
-                .claim("email", username + "@enm.it")
+                .claim("email", username + "@microcredito.gov.it")
                 .setSubject(username)
                 .setId(UUID.randomUUID().toString())
                 .setIssuedAt(Date.from(is1))

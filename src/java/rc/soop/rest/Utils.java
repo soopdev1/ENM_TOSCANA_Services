@@ -115,4 +115,14 @@ public class Utils {
         }
     }
 
+    public static void insertRequest(String request) {
+        try {
+            Database db2 = new Database();
+            db2.insertTracking("SERVICE IDOL", request);
+            db2.closeDB();
+        } catch (Exception ex1) {
+            ex1.printStackTrace();
+        }
+    }
+
 }

@@ -77,7 +77,6 @@ public class ServicesREST {
 //            throw new IOException();
 //        }
 //    }
-
     private String issueToken(String username) {
         // Issue a token (can be a random String persisted to a database or a JWT token)
         // The issued token must be associated to a user
@@ -94,10 +93,7 @@ public class ServicesREST {
                 .signWith(ju)
                 .compact();
     }
-    
-    
-    
-    
+
     @GET
     @Secured
     @Path("/testservices")
@@ -116,6 +112,8 @@ public class ServicesREST {
     @Consumes("application/json")
     @Produces("application/json")
     public Response verificacf(String json_cf) {
+        Utils.insertRequest("REQ verificacf: " + json_cf);
+
         JsonObject convertedObject = new Gson().fromJson(json_cf, JsonObject.class);
         String codiceFiscale = getJsonString(convertedObject, "codiceFiscale");
         String errorcf = validateCF(codiceFiscale);
@@ -123,6 +121,7 @@ public class ServicesREST {
             Database db1 = new Database();
             Response_verificacf OUT1 = db1.verificacf(codiceFiscale);
             db1.closeDB();
+            Utils.insertRequest("RESPONSE verificacf: " + new Gson().toJson(OUT1));
             return Response.status(200).entity(new Gson().toJson(OUT1)).build();
         } else {
             Response_verificacf OUT = new Response_verificacf(null, "KO", "ERRORE CODICE FISCALE: " + errorcf);
@@ -136,6 +135,7 @@ public class ServicesREST {
     @Consumes("application/json")
     @Produces("application/json")
     public Response insertanagrafica(String json_values) {
+        Utils.insertRequest("REQ insertanagrafica: " + json_values);
         JsonObject convertedObject = new Gson().fromJson(json_values, JsonObject.class);
         String codiceFiscale = getJsonString(convertedObject, "codiceFiscale");
         String errorcf = validateCF(codiceFiscale);
@@ -163,6 +163,8 @@ public class ServicesREST {
                 db2.closeDB();
                 if (idallievo > 0) {
                     Response_insertanagrafica OUT = new Response_insertanagrafica(new msg_Response_insertanagrafica(idallievo), "SUCCESS", "Operazione eseguita con successo");
+                    Utils.insertRequest("RESPONSE insertanagrafica: " + new Gson().toJson(OUT));
+
                     return Response.status(200).entity(new Gson().toJson(OUT)).build();
                 } else {
                     String message = "ERRORE DURANTE L'INSERIMENTO DEI DATI. CONTATTARE ADMIN.";
@@ -192,6 +194,7 @@ public class ServicesREST {
     @Consumes("application/json")
     @Produces("application/json")
     public Response annulla(String json_values) {
+        Utils.insertRequest("annulla: " + json_values);
         JsonObject convertedObject = new Gson().fromJson(json_values, JsonObject.class);
         String codiceFiscale = getJsonString(convertedObject, "codiceFiscale");
         String codiceAttivita = getJsonString(convertedObject, "codiceAttivita");
@@ -203,7 +206,7 @@ public class ServicesREST {
             Response_verificacf OUT1 = db1.verificacf(codiceFiscale);
             db1.closeDB();
             if (OUT1.getMsg() != null) {
-                if (OUT1.getOperationStatus().equals("SUCCESS")) {
+                if (OUT1.getOperationStatus().equals("SUCCESS") || OUT1.getOperationMessage().contains("ISCRIZIONE GIA' EFFETTUATA")) {
                     String esitodest = "09";
                     if (esito.equals("ANNULLATA_CPI_APL")) {
                         Database db2 = new Database();
@@ -212,6 +215,7 @@ public class ServicesREST {
                         db2.closeDB();
                         if (update_esito) {
                             Response_insertanagrafica OUT = new Response_insertanagrafica(null, "SUCCESS", "Operazione eseguita con successo");
+                            Utils.insertRequest("RESPONSE annulla: " + new Gson().toJson(OUT1));
                             return Response.status(200).entity(new Gson().toJson(OUT)).build();
                         } else {
                             Response_insertanagrafica OUT = new Response_insertanagrafica(null, "KO", "STATO ALLIEVO NON COERENTE.");
@@ -242,6 +246,8 @@ public class ServicesREST {
     @Consumes("application/json")
     @Produces("application/json")
     public Response insertiscrizione(String json_values) {
+        Utils.insertRequest("insertiscrizione: " + json_values);
+
         JsonObject convertedObject = new Gson().fromJson(json_values, JsonObject.class);
         String codiceFiscale = getJsonString(convertedObject, "codiceFiscale");
         String dataIscrizione = getJsonString(convertedObject, "dataIscrizione");
@@ -282,8 +288,8 @@ public class ServicesREST {
                     al1.setTos_tipofinanziamento(finanziamento); // DA FARE CHECK
                     al1.setIscrizionegg(convertDate(dataIscrizione, PATTERN1)); // DA FARE CHECK SU NULLA
                     Database db2 = new Database();
-                    Long idComuneResidenza = db1.getIdComune(codCatastaleComune);
-                    db2.closeDB();
+                    Long idComuneResidenza = db2.getIdComune(codCatastaleComune);
+                    
                     al1.setComune_residenza(String.valueOf(idComuneResidenza)); //CHECK SE DIVERSO DA 0
                     al1.setCapresidenza(cap);
                     al1.setIndirizzoresidenza(via);
@@ -295,10 +301,24 @@ public class ServicesREST {
                     al1.setCondizione_lavorativa(tipoCondizioneProfessionale); //CHECK
 
                     //CHECK
+                    
+                    
+                    //UPDATE VALORE PER PRODUZIONE
+                    
+                    
+                    
+                    
+                    
+                    db2.closeDB();
+                    
+
+
                     //INSERT
                     Response_insertiscrizione OUT = new Response_insertiscrizione(
-                            new msg_Response_insertiscrizione(11111L),
+                            new msg_Response_insertiscrizione(al1.getId()),
                             "SUCCESS", "Operazione eseguita con successo");
+                    Utils.insertRequest("RESPONSE insertiscrizione: " + new Gson().toJson(OUT1));
+
                     return Response.status(200).entity(new Gson().toJson(OUT)).build();
 
                 } else {
@@ -306,8 +326,16 @@ public class ServicesREST {
                     return Response.status(200).entity(new Gson().toJson(OUT)).build();
                 }
             } else {
-                Response_insertiscrizione OUT = new Response_insertiscrizione(null, "KO", "CODICE FISCALE NON TROVATO.");
-                return Response.status(200).entity(new Gson().toJson(OUT)).build();
+
+                if (OUT1.getOperationMessage() != null) {
+                    Response_insertanagrafica OUT = new Response_insertanagrafica(null, "KO", OUT1.getOperationMessage());
+                    return Response.status(200).entity(new Gson().toJson(OUT)).build();
+
+                } else {
+
+                    Response_insertiscrizione OUT = new Response_insertiscrizione(null, "KO", "CODICE FISCALE NON TROVATO.");
+                    return Response.status(200).entity(new Gson().toJson(OUT)).build();
+                }
             }
 
         } else {

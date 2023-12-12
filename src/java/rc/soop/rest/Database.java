@@ -105,7 +105,12 @@ public class Database {
                                 rs.getString("stato_nascita").equals("100") ? "----" : rs.getString("stato_nascita"),
                                 rs.getString("stato_nascita").equals("100") ? null : getNazioneIstat(rs.getString("stato_nascita"))
                         );
-                        return new Response_verificacf(msg, "SUCCESS", "Operazione eseguita con successo");
+                        if (rs.getString("id_statopartecipazione").equals("00")) {
+                            return new Response_verificacf(msg, "SUCCESS", "Operazione eseguita con successo");
+
+                        } else {
+                            return new Response_verificacf(null, "KO", "ISCRIZIONE GIA' EFFETTUATA");
+                        }
                     }
                 }
             }
@@ -243,7 +248,7 @@ public class Database {
 
     public boolean cambiostatoallievo(String cf, String statodest) {
         try {
-            String upd = "UPDATE allievi SET id_statopartecipazione = '" + statodest + "' WHERE codicefiscale = '" + cf + "' AND id_statopartecipazione IN ('10','12','13','14')";
+            String upd = "UPDATE allievi SET id_statopartecipazione = '" + statodest + "' WHERE codicefiscale = '" + cf + "' AND id_statopartecipazione IN ('00','10','12','13','14')";
             try (Statement st = this.c.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 return st.executeUpdate(upd) > 0;
             }

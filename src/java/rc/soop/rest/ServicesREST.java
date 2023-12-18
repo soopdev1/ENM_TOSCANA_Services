@@ -113,7 +113,6 @@ public class ServicesREST {
     @Produces("application/json")
     public Response verificacf(String json_cf) {
         Utils.insertRequest("REQ verificacf: " + json_cf);
-
         JsonObject convertedObject = new Gson().fromJson(json_cf, JsonObject.class);
         String codiceFiscale = getJsonString(convertedObject, "codiceFiscale");
         String errorcf = validateCF(codiceFiscale);
@@ -121,10 +120,11 @@ public class ServicesREST {
             Database db1 = new Database();
             Response_verificacf OUT1 = db1.verificacf(codiceFiscale);
             db1.closeDB();
-            Utils.insertRequest("RESPONSE verificacf: " + new Gson().toJson(OUT1));
+            Utils.insertRequest("OK RESPONSE verificacf: " + new Gson().toJson(OUT1));
             return Response.status(200).entity(new Gson().toJson(OUT1)).build();
         } else {
             Response_verificacf OUT = new Response_verificacf(null, "KO", "ERRORE CODICE FISCALE: " + errorcf);
+            Utils.insertRequest("KO RESPONSE verificacf: " + new Gson().toJson(OUT));
             return Response.status(200).entity(new Gson().toJson(OUT)).build();
         }
     }
@@ -146,9 +146,12 @@ public class ServicesREST {
             if (OUT1.getMsg() != null) {
                 if (OUT1.getOperationStatus().equals("SUCCESS")) {
                     Response_insertanagrafica OUT = new Response_insertanagrafica(null, "KO", "ANAGRAFICA GIA' PRESENTE.");
+                    Utils.insertRequest("KO RESPONSE insertanagrafica: " + new Gson().toJson(OUT));
                     return Response.status(200).entity(new Gson().toJson(OUT)).build();
                 } else {
                     Response_insertanagrafica OUT = new Response_insertanagrafica(null, OUT1.getOperationStatus(), OUT1.getOperationMessage());
+                    Utils.insertRequest("KO RESPONSE insertanagrafica: " + new Gson().toJson(OUT1));
+
                     return Response.status(200).entity(new Gson().toJson(OUT)).build();
                 }
             } else {
@@ -163,7 +166,7 @@ public class ServicesREST {
                 db2.closeDB();
                 if (idallievo > 0) {
                     Response_insertanagrafica OUT = new Response_insertanagrafica(new msg_Response_insertanagrafica(idallievo), "SUCCESS", "Operazione eseguita con successo");
-                    Utils.insertRequest("RESPONSE insertanagrafica: " + new Gson().toJson(OUT));
+                    Utils.insertRequest("OK RESPONSE insertanagrafica: " + new Gson().toJson(OUT));
 
                     return Response.status(200).entity(new Gson().toJson(OUT)).build();
                 } else {
@@ -179,11 +182,13 @@ public class ServicesREST {
                         }
                     }
                     Response_insertanagrafica OUT = new Response_insertanagrafica(null, "KO", message);
+                    Utils.insertRequest("KO RESPONSE insertanagrafica: " + new Gson().toJson(OUT));
                     return Response.status(200).entity(new Gson().toJson(OUT)).build();
                 }
             }
         } else {
             Response_insertanagrafica OUT = new Response_insertanagrafica(null, "KO", "ERRORE CODICE FISCALE: " + errorcf);
+            Utils.insertRequest("KO RESPONSE insertangrafica: " + new Gson().toJson(OUT));
             return Response.status(200).entity(new Gson().toJson(OUT)).build();
         }
     }
@@ -215,27 +220,36 @@ public class ServicesREST {
                         db2.closeDB();
                         if (update_esito) {
                             Response_insertanagrafica OUT = new Response_insertanagrafica(null, "SUCCESS", "Operazione eseguita con successo");
-                            Utils.insertRequest("RESPONSE annulla: " + new Gson().toJson(OUT1));
+                            Utils.insertRequest("OK RESPONSE annulla: " + new Gson().toJson(OUT1));
                             return Response.status(200).entity(new Gson().toJson(OUT)).build();
                         } else {
                             Response_insertanagrafica OUT = new Response_insertanagrafica(null, "KO", "STATO ALLIEVO NON COERENTE.");
+                            Utils.insertRequest("KO RESPONSE annulla: " + new Gson().toJson(OUT));
                             return Response.status(200).entity(new Gson().toJson(OUT)).build();
                         }
                     } else {
                         Response_insertanagrafica OUT = new Response_insertanagrafica(null, "KO", "ESITO NON RICONOSCIUTO.");
+                        Utils.insertRequest("KO RESPONSE annulla: " + new Gson().toJson(OUT));
+
                         return Response.status(200).entity(new Gson().toJson(OUT)).build();
                     }
 
                 } else {
                     Response_insertanagrafica OUT = new Response_insertanagrafica(null, OUT1.getOperationStatus(), OUT1.getOperationMessage());
+                    Utils.insertRequest("KO RESPONSE annulla: " + new Gson().toJson(OUT));
+
                     return Response.status(200).entity(new Gson().toJson(OUT)).build();
                 }
             } else {
                 Response_insertanagrafica OUT = new Response_insertanagrafica(null, "KO", "CODICE FISCALE NON TROVATO.");
+                Utils.insertRequest("KO RESPONSE annulla: " + new Gson().toJson(OUT));
+
                 return Response.status(200).entity(new Gson().toJson(OUT)).build();
             }
         } else {
             Response_insertanagrafica OUT = new Response_insertanagrafica(null, "KO", "ERRORE CODICE FISCALE: " + errorcf);
+            Utils.insertRequest("KO RESPONSE annulla: " + new Gson().toJson(OUT));
+
             return Response.status(200).entity(new Gson().toJson(OUT)).build();
         }
     }
@@ -289,7 +303,7 @@ public class ServicesREST {
                     al1.setIscrizionegg(convertDate(dataIscrizione, PATTERN1)); // DA FARE CHECK SU NULLA
                     Database db2 = new Database();
                     Long idComuneResidenza = db2.getIdComune(codCatastaleComune);
-                    
+
                     al1.setComune_residenza(String.valueOf(idComuneResidenza)); //CHECK SE DIVERSO DA 0
                     al1.setCapresidenza(cap);
                     al1.setIndirizzoresidenza(via);
@@ -298,48 +312,67 @@ public class ServicesREST {
                     al1.setTitoloStudio(idTitoloStudio); // CHECK
                     al1.setCpi(idCentroImpiego); //CHECK
                     al1.setDatacpi(convertDate(dataIscrizioneCentroImpiego, PATTERN1)); // DA FARE CHECK SU NULLA
-                    al1.setCondizione_lavorativa(tipoCondizioneProfessionale); //CHECK
+
+                    String cm = db2.getCondizionemercato(tipoCondizioneProfessionale);
+                    if (cm == null) {
+                        db2.closeDB();
+                        Response_insertiscrizione OUT = new Response_insertiscrizione(null, "KO", "tipoCondizioneProfessionale '" + tipoCondizioneProfessionale + "' NON MAPPATA CORRETTAMENTE. VERIFICARE REQUEST.");
+                        Utils.insertRequest("KO RESPONSE insertanagrafica: " + new Gson().toJson(OUT));
+
+                        return Response.status(200).entity(new Gson().toJson(OUT)).build();
+                    } else {
+                        al1.setCondizione_lavorativa(cm); //CHECK
+                    }
 
                     //CHECK
-                    
-                    
                     //UPDATE VALORE PER PRODUZIONE
-                    
-                    
-                    
-                    
-                    
+                    boolean ex = db2.updateDatiAllievo(al1);
+
                     db2.closeDB();
-                    
 
+                    if (ex) {
+                        //INSERT
+                        Response_insertiscrizione OUT = new Response_insertiscrizione(
+                                new msg_Response_insertiscrizione(al1.getId()),
+                                "SUCCESS", "Operazione eseguita con successo");
+                        Utils.insertRequest("OK RESPONSE insertiscrizione: " + new Gson().toJson(OUT1));
 
-                    //INSERT
-                    Response_insertiscrizione OUT = new Response_insertiscrizione(
-                            new msg_Response_insertiscrizione(al1.getId()),
-                            "SUCCESS", "Operazione eseguita con successo");
-                    Utils.insertRequest("RESPONSE insertiscrizione: " + new Gson().toJson(OUT1));
+                        return Response.status(200).entity(new Gson().toJson(OUT)).build();
+                    } else {
+                        Response_insertiscrizione OUT = new Response_insertiscrizione(null, "KO", "IMPOSSIBILE MODIFICARE I DATI. VERIFICARE REQUEST.");
+                        Utils.insertRequest("KO RESPONSE insertiscrizione: " + new Gson().toJson(OUT));
 
-                    return Response.status(200).entity(new Gson().toJson(OUT)).build();
+                        return Response.status(200).entity(new Gson().toJson(OUT)).build();
+
+                    }
 
                 } else {
                     Response_insertiscrizione OUT = new Response_insertiscrizione(null, OUT1.getOperationStatus(), OUT1.getOperationMessage());
+                    Utils.insertRequest("KO RESPONSE insertiscrizione: " + new Gson().toJson(OUT1));
+
                     return Response.status(200).entity(new Gson().toJson(OUT)).build();
                 }
             } else {
 
                 if (OUT1.getOperationMessage() != null) {
                     Response_insertanagrafica OUT = new Response_insertanagrafica(null, "KO", OUT1.getOperationMessage());
+                    Utils.insertRequest("KO RESPONSE insertiscrizione: " + new Gson().toJson(OUT));
+
                     return Response.status(200).entity(new Gson().toJson(OUT)).build();
 
                 } else {
 
                     Response_insertiscrizione OUT = new Response_insertiscrizione(null, "KO", "CODICE FISCALE NON TROVATO.");
+                    Utils.insertRequest("KO RESPONSE insertiscrizione: " + new Gson().toJson(OUT));
+
                     return Response.status(200).entity(new Gson().toJson(OUT)).build();
                 }
             }
 
         } else {
             Response_insertiscrizione OUT = new Response_insertiscrizione(null, "KO", "ERRORE CODICE FISCALE: " + errorcf);
+                        Utils.insertRequest("KO RESPONSE insertiscrizione: " + new Gson().toJson(OUT));
+
             return Response.status(200).entity(new Gson().toJson(OUT)).build();
         }
     }

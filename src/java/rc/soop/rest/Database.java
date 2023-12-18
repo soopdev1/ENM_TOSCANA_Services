@@ -88,10 +88,9 @@ public class Database {
 
     public Response_verificacf verificacf(String cf) {
         try {
-            String sql = "SELECT * FROM allievi a WHERE a.codicefiscale = ? AND a.id_statopartecipazione <> ?";
+            String sql = "SELECT * FROM allievi a WHERE a.codicefiscale = ? AND a.id_statopartecipazione NOT IN ('09','11')";
             try (PreparedStatement ps = this.c.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                 ps.setString(1, cf);
-                ps.setString(2, "11");
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         msg_Response_verificacf msg = new msg_Response_verificacf(
@@ -107,9 +106,8 @@ public class Database {
                         );
                         if (rs.getString("id_statopartecipazione").equals("00")) {
                             return new Response_verificacf(msg, "SUCCESS", "Operazione eseguita con successo");
-
                         } else {
-                            return new Response_verificacf(null, "KO", "ISCRIZIONE GIA' EFFETTUATA");
+                            return new Response_verificacf(msg, "KO", "ISCRIZIONE GIA' EFFETTUATA");
                         }
                     }
                 }
@@ -256,6 +254,65 @@ public class Database {
             insertTracking("ERROR SYSTEM", estraiEccezione(ex));
         }
         return false;
+    }
+
+    public boolean updateDatiAllievo(Allievi al1) {
+        boolean out = false;
+        try {
+            String sel = "SELECT a.idallievi FROM allievi a WHERE a.codicefiscale = '" + al1.getCodicefiscale() + "' AND a.id_statopartecipazione='00' ORDER BY idallievi DESC LIMIT 1";
+            try (Statement st = this.c.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE); ResultSet rs = st.executeQuery(sel)) {
+                if (rs.next()) {
+                    String id = rs.getString(1);
+
+                    String update = "UPDATE allievi SET telefono = ?, email = ?, tos_dirittoindennita = ?, tos_tipofinanziamento = ?, iscrizionegg = ?, comune_residenza = ?,"
+                            + " capresidenza = ?, indirizzoresidenza = ?, tos_gruppovulnerabile = ?, titolo_studio = ?, cpi = ?, datacpi = ? , idcondizione_mercato = ?, id_statopartecipazione = ?, data_up = ? WHERE idallievi = ?";
+
+                    try (PreparedStatement ps1 = this.c.prepareStatement(update, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+                        ps1.setString(1, al1.getTelefono());
+                        ps1.setString(2, al1.getEmail());
+                        ps1.setString(3, al1.getTos_dirittoindennita());
+                        ps1.setString(4, al1.getTos_tipofinanziamento());
+                        ps1.setDate(5, new java.sql.Date(al1.getIscrizionegg().getTime()));
+                        ps1.setString(6, al1.getComune_residenza());
+                        ps1.setString(7, al1.getCapresidenza());
+                        ps1.setString(8, al1.getIndirizzoresidenza());
+                        ps1.setString(9, al1.getTos_gruppovulnerabile());
+                        ps1.setString(10, al1.getTitoloStudio());
+                        ps1.setString(11, al1.getCpi());
+                        ps1.setDate(12, new java.sql.Date(al1.getDatacpi().getTime()));
+                        ps1.setString(13, al1.getCondizione_lavorativa());
+                        ps1.setString(14, "10");
+                        ps1.setDate(15, new java.sql.Date(new DateTime().getMillis()));
+                        ps1.setString(16, id);
+                        out = ps1.executeUpdate()>0;
+                    }
+                }
+            }
+
+        } catch (Exception ex) {
+            insertTracking("ERROR SYSTEM", estraiEccezione(ex));
+            out = false;
+        }
+        return out;
+    }
+    
+    public String getCondizionemercato(String descrizione){
+        String out = null;
+        try{
+            String sql = "SELECT idcondizione_mercato FROM condizione_mercato WHERE descrizione = ?";
+            try (PreparedStatement ps1 = this.c.prepareStatement(sql)) {
+                ps1.setString(1, descrizione);
+                try (ResultSet rs1 = ps1.executeQuery()) {
+                    if(rs1.next()){
+                        out =  rs1.getString(1);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            insertTracking("ERROR SYSTEM", estraiEccezione(ex));
+            out = null;
+        }
+        return out;
     }
 
 }

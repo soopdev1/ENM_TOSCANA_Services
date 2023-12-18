@@ -81,6 +81,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                                 AUTHENTICATION_SCHEME + " realm=\"" + REALM + "\"")
                         .build());
     }
+    
     private static final String secret = "asdfSFS34wfsdfsdfSDSD32dfsddDDerQSNCK34SOWEK5354fdgdRR";
 
     private void validateToken(String token) throws Exception {

@@ -223,7 +223,7 @@ public class Database {
                 ps.setString(2, cognome);
                 ps.setString(3, codiceFiscale);
                 ps.setString(4, sesso);
-                ps.setString(5, DTFPATTERN1.parseDateTime(dataNascita).toString(PATTERN2));
+                ps.setString(5, DTFPATTERN1.parseLocalDateTime(dataNascita).toString(PATTERN2));
                 ps.setLong(6, comune_nascita);
                 ps.setString(7, codCatastaleStatoCittadinanza);
                 int affectedRows = ps.executeUpdate();
@@ -265,7 +265,8 @@ public class Database {
                     String id = rs.getString(1);
 
                     String update = "UPDATE allievi SET telefono = ?, email = ?, tos_dirittoindennita = ?, tos_tipofinanziamento = ?, iscrizionegg = ?, comune_residenza = ?,"
-                            + " capresidenza = ?, indirizzoresidenza = ?, tos_gruppovulnerabile = ?, titolo_studio = ?, cpi = ?, datacpi = ? , idcondizione_mercato = ?, id_statopartecipazione = ?, data_up = ? WHERE idallievi = ?";
+                            + " capresidenza = ?, indirizzoresidenza = ?, tos_gruppovulnerabile = ?, titolo_studio = ?, cpi = ?, datacpi = ? , idcondizione_mercato = ?,"
+                            + " id_statopartecipazione = ?, data_up = ?, comune_domicilio = ?, capdomicilio = ?, indirizzodomicilio = ? WHERE idallievi = ?";
 
                     try (PreparedStatement ps1 = this.c.prepareStatement(update, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
                         ps1.setString(1, al1.getTelefono());
@@ -283,8 +284,11 @@ public class Database {
                         ps1.setString(13, al1.getCondizione_lavorativa());
                         ps1.setString(14, "10");
                         ps1.setDate(15, new java.sql.Date(new DateTime().getMillis()));
-                        ps1.setString(16, id);
-                        out = ps1.executeUpdate()>0;
+                        ps1.setString(16, al1.getComune_domicilio());
+                        ps1.setString(17, al1.getCapdomicilio());
+                        ps1.setString(18, al1.getCapresidenza());
+                        ps1.setString(19, id);
+                        out = ps1.executeUpdate() > 0;
                     }
                 }
             }
@@ -295,16 +299,16 @@ public class Database {
         }
         return out;
     }
-    
-    public String getCondizionemercato(String descrizione){
+
+    public String getCondizionemercato(String descrizione) {
         String out = null;
-        try{
+        try {
             String sql = "SELECT idcondizione_mercato FROM condizione_mercato WHERE descrizione = ?";
             try (PreparedStatement ps1 = this.c.prepareStatement(sql)) {
                 ps1.setString(1, descrizione);
                 try (ResultSet rs1 = ps1.executeQuery()) {
-                    if(rs1.next()){
-                        out =  rs1.getString(1);
+                    if (rs1.next()) {
+                        out = rs1.getString(1);
                     }
                 }
             }

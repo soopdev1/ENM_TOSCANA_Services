@@ -276,7 +276,18 @@ public class ServicesREST {
         JsonObject centroImpiego = datiIscrizione.getAsJsonObject("centroImpiego");
         JsonObject condizioneProfessionale = datiIscrizione.getAsJsonObject("condizioneProfessionale");
         String codCatastaleComune = getJsonString(indirizzoResidenza, "codCatastaleComune");
-//            String localita = getJsonString(indirizzoResidenza, "localita");
+        
+        String DOM_codCatastaleComune  = "";
+        String DOM_via  = "";
+        String DOM_cap  = "";
+        if (!datiIscrizione.get("indirizzoDomicilio").isJsonNull()) {
+            JsonObject indirizzoDomicilio = datiIscrizione.getAsJsonObject("indirizzoDomicilio");
+            DOM_codCatastaleComune = getJsonString(indirizzoDomicilio, "codCatastaleComune");
+            DOM_via = getJsonString(indirizzoDomicilio, "via");
+            DOM_cap = getJsonString(indirizzoDomicilio, "cap");
+        }
+            
+
         String via = getJsonString(indirizzoResidenza, "via");
         String cap = getJsonString(indirizzoResidenza, "cap");
         String idGruppoVulnerabile = getJsonString(datiIscrizione, "idGruppoVulnerabile");
@@ -303,10 +314,21 @@ public class ServicesREST {
                     al1.setIscrizionegg(convertDate(dataIscrizione, PATTERN1)); // DA FARE CHECK SU NULLA
                     Database db2 = new Database();
                     Long idComuneResidenza = db2.getIdComune(codCatastaleComune);
+                    Long idComuneDomicilio = db2.getIdComune(DOM_codCatastaleComune);
 
                     al1.setComune_residenza(String.valueOf(idComuneResidenza)); //CHECK SE DIVERSO DA 0
                     al1.setCapresidenza(cap);
                     al1.setIndirizzoresidenza(via);
+
+                    if (idComuneDomicilio.equals(0L)) {
+                        al1.setComune_domicilio(null);
+                        al1.setCapdomicilio(null);
+                        al1.setIndirizzodomicilio(null);
+                    } else {
+                        al1.setComune_domicilio(String.valueOf(idComuneDomicilio));
+                        al1.setCapdomicilio(DOM_cap);
+                        al1.setIndirizzodomicilio(DOM_via);
+                    }
 
                     al1.setTos_gruppovulnerabile(idGruppoVulnerabile); //CHECK
                     al1.setTitoloStudio(idTitoloStudio); // CHECK
@@ -371,7 +393,7 @@ public class ServicesREST {
 
         } else {
             Response_insertiscrizione OUT = new Response_insertiscrizione(null, "KO", "ERRORE CODICE FISCALE: " + errorcf);
-                        Utils.insertRequest("KO RESPONSE insertiscrizione: " + new Gson().toJson(OUT));
+            Utils.insertRequest("KO RESPONSE insertiscrizione: " + new Gson().toJson(OUT));
 
             return Response.status(200).entity(new Gson().toJson(OUT)).build();
         }
